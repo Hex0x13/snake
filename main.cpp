@@ -3,6 +3,8 @@
 #include <vector>
 #include <deque>
 #include <algorithm>
+#include <SDL2/SDL_ttf.h>
+#include <cstdio>
 
 #define DEFAULT_SNAKE_SIZE 30
 #define SCREEN_W 800
@@ -11,7 +13,7 @@
 #define OFFSET_Y 40
 #define SHW 10
 
-int SPEED = 2;
+int SPEED = 4;
 enum Direction {
     DOWN,
     UP,
@@ -20,6 +22,7 @@ enum Direction {
 };
 enum Direction direction;
 int snake_size = DEFAULT_SNAKE_SIZE;
+unsigned int score = 0;
 
 static bool running = true;
 SDL_Rect src = {0, 0, SCREEN_H / 32, SCREEN_W / 32};
@@ -89,6 +92,7 @@ void logic(SDL_Renderer *renderer) {
         (snake_head.y + snake_head.h >= apple.y && snake_head.y + snake_head.h <= apple.y + apple.h)))
     {
         snake_size += 10;
+        score += 1;
         apple.x = rand() % (des.h - apple.h)+ des.y;
         apple.y = rand() % (des.w - apple.w) + des.x;
     }
@@ -98,11 +102,13 @@ void logic(SDL_Renderer *renderer) {
         (snake_head.y >= des.h + snake_head.h) ||
         (snake_head.y <= des.y)) {
             snake_size = DEFAULT_SNAKE_SIZE;
+            score = 0;
     }
 
     std::for_each(snake_tail.begin(), snake_tail.end(), [&](auto &tail) {
         if (snake_head.x == tail.x && snake_head.y == tail.y) {
             snake_size = DEFAULT_SNAKE_SIZE;
+            score = 0;
         }
     });
 
@@ -136,7 +142,6 @@ void draw(SDL_Renderer *renderer) {
         SDL_RenderFillRect(renderer, &snake_segment);      
     });
 
-    SDL_RenderPresent(renderer);
     snake_tail.push_front(snake_head);
     while ((int)snake_tail.size() > snake_size) {
         snake_tail.pop_back();
@@ -145,6 +150,7 @@ void draw(SDL_Renderer *renderer) {
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
+
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
 
@@ -162,6 +168,19 @@ int main(int argc, char *argv[]) {
         perror("SDL Renderer Initialization failed!\n");
     }
 
+    if (TTF_Init() == -1) {
+        perror("TTF Initialization failed!\n");
+        return 1;
+    }
+
+    int font_w, font_h;
+    char scoreText[64];
+    TTF_Font *font = TTF_OpenFont("./fonts/CallOfOpsDutyIi-7Bgm4.ttf", 18);
+    SDL_Color fontColor{255, 255, 255, 180};
+    SDL_Surface *textSurf = nullptr;
+    SDL_Texture *fontTexture = nullptr;
+    SDL_Rect fontDsRect;
+
     texture = SDL_CreateTexture(
         renderer,
         SDL_PIXELFORMAT_RGBA8888,
@@ -173,17 +192,29 @@ int main(int argc, char *argv[]) {
         rand() % (des.w - apple.w) + des.x,
         SHW,
         SHW
-        };
+    };
 
     while (running)
     {
         events();
         draw(renderer);
+        // SCORE DISPLAYING
+        snprintf(scoreText, sizeof(scoreText), "score : %u", score);
+        if (textSurf) SDL_FreeSurface(textSurf);
+        textSurf = TTF_RenderText_Solid(font, scoreText, fontColor);
+        if (fontTexture) SDL_DestroyTexture(fontTexture);
+        fontTexture = SDL_CreateTextureFromSurface(renderer, textSurf);
+        SDL_QueryTexture(fontTexture, NULL, NULL, &font_w, &font_h);
+        fontDsRect = (SDL_Rect){des.x + 2, des.y + 2, font_w, font_h};
+
+        SDL_RenderCopy(renderer, fontTexture, NULL, &fontDsRect);
+        SDL_RenderPresent(renderer);
         logic(renderer);
-        SDL_Delay(10);
+        SDL_Delay(20);
     }
     
-
+    TTF_CloseFont(font);
+    TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
