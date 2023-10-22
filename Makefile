@@ -8,7 +8,7 @@ EXE = snake
 INC_DIRS = -Isrc/include
 LIB_DIRS = -Lsrc/lib
 
-LIBS = -lmingw32 -lSDL2_ttf -lSDL2main -lSDL2 -g
+LIBS = -lmingw32 -lSDL2_ttf -lSDL2_image -lSDL2_mixer -lSDL2_net -lSDL2main -lSDL2 -g
 DBG = gdb
 
 

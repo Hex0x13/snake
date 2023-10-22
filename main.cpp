@@ -200,9 +200,7 @@ int main(int argc, char *argv[]) {
         draw(renderer);
         // SCORE DISPLAYING
         snprintf(scoreText, sizeof(scoreText), "score : %u", score);
-        if (textSurf) SDL_FreeSurface(textSurf);
         textSurf = TTF_RenderText_Solid(font, scoreText, fontColor);
-        if (fontTexture) SDL_DestroyTexture(fontTexture);
         fontTexture = SDL_CreateTextureFromSurface(renderer, textSurf);
         SDL_QueryTexture(fontTexture, NULL, NULL, &font_w, &font_h);
         fontDsRect = (SDL_Rect){des.x + 2, des.y + 2, font_w, font_h};
@@ -210,6 +208,8 @@ int main(int argc, char *argv[]) {
         SDL_RenderCopy(renderer, fontTexture, NULL, &fontDsRect);
         SDL_RenderPresent(renderer);
         logic(renderer);
+        SDL_FreeSurface(textSurf);
+        SDL_DestroyTexture(fontTexture);
         SDL_Delay(20);
     }
     
