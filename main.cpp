@@ -9,8 +9,8 @@
 #define DEFAULT_SNAKE_SIZE 30
 #define SCREEN_W 800
 #define SCREEN_H 800
-#define OFFSET_X 40
-#define OFFSET_Y 40
+#define OFFSET 40
+#define PADDING 20
 #define SHW 10
 
 int SPEED = 4;
@@ -23,10 +23,11 @@ enum Direction {
 enum Direction direction;
 int snake_size = DEFAULT_SNAKE_SIZE;
 unsigned int score = 0;
+unsigned int highscore = 0;
 
 static bool running = true;
 SDL_Rect src = {0, 0, SCREEN_H / 32, SCREEN_W / 32};
-SDL_Rect des = {20, 20, SCREEN_H - OFFSET_Y, SCREEN_W - OFFSET_X};
+SDL_Rect des = {PADDING, PADDING, SCREEN_H - OFFSET, SCREEN_W - OFFSET};
 SDL_Texture *texture;
 SDL_Rect snake_head{SCREEN_H / 2 - SHW, SCREEN_W / 2 - SHW, SHW, SHW};
 std::deque<SDL_Rect> snake_tail;
@@ -69,6 +70,35 @@ void events() {
     
 }
 
+void load_highscore() {
+    FILE *file = fopen("./highscore", "r");
+    if (file == NULL) {
+        fprintf(stderr, "Error in loading highscore\n");
+        return;
+    }
+    fscanf(file, "%d", &highscore);
+    fclose(file);
+}
+
+void save_highscore() {
+    FILE *file = fopen("./highscore", "w");
+    if (file == NULL) {
+        fprintf(stderr, "Error in saving highscore\n");
+        return;
+    }
+    fprintf(file, "%d", highscore);
+    fclose(file);
+}
+
+void gameover() {
+    if (highscore < score) {
+        highscore = score;
+        save_highscore();
+    }
+    snake_size = DEFAULT_SNAKE_SIZE;
+    score = 0;
+}
+
 void logic(SDL_Renderer *renderer) {
     switch (direction)
     {
@@ -101,14 +131,12 @@ void logic(SDL_Renderer *renderer) {
         (snake_head.x <= des.x) ||
         (snake_head.y >= des.h + snake_head.h) ||
         (snake_head.y <= des.y)) {
-            snake_size = DEFAULT_SNAKE_SIZE;
-            score = 0;
+            gameover();
     }
 
     std::for_each(snake_tail.begin(), snake_tail.end(), [&](auto &tail) {
         if (snake_head.x == tail.x && snake_head.y == tail.y) {
-            snake_size = DEFAULT_SNAKE_SIZE;
-            score = 0;
+            gameover();
         }
     });
 
@@ -173,8 +201,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    load_highscore();
     int font_w, font_h;
-    char scoreText[64];
+    char scoreText[128];
     TTF_Font *font = TTF_OpenFont("./fonts/CallOfOpsDutyIi-7Bgm4.ttf", 18);
     SDL_Color fontColor{255, 255, 255, 180};
     SDL_Surface *textSurf = nullptr;
@@ -199,7 +228,7 @@ int main(int argc, char *argv[]) {
         events();
         draw(renderer);
         // SCORE DISPLAYING
-        snprintf(scoreText, sizeof(scoreText), "score : %u", score);
+        snprintf(scoreText, sizeof(scoreText), " high score : %u        score : %u", highscore, score);
         textSurf = TTF_RenderText_Solid(font, scoreText, fontColor);
         fontTexture = SDL_CreateTextureFromSurface(renderer, textSurf);
         SDL_QueryTexture(fontTexture, NULL, NULL, &font_w, &font_h);
