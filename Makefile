@@ -1,4 +1,3 @@
-
 CC = g++
 CFLAGS = -Wall -std=c++17
 
@@ -8,9 +7,9 @@ EXE = snake
 INC_DIRS = -Isrc/include
 LIB_DIRS = -Lsrc/lib
 
-LIBS = -lmingw32 -lSDL2_ttf -lSDL2_image -lSDL2_mixer -lSDL2_net -lSDL2main -lSDL2 -g
+# Specify the static libraries (replace these with the actual library names)
+LIBS = -lmingw32 -lSDL2_ttf -lSDL2_image -lSDL2_mixer -lSDL2_net -lSDL2main -lSDL2 -static-libgcc -static-libstdc++
 DBG = gdb
-
 
 all: $(EXE)
 
