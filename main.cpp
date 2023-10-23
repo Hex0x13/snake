@@ -91,10 +91,7 @@ void save_highscore() {
 }
 
 void gameover() {
-    if (highscore < score) {
-        highscore = score;
-        save_highscore();
-    }
+    save_highscore();
     snake_size = DEFAULT_SNAKE_SIZE;
     score = 0;
 }
@@ -148,6 +145,10 @@ void logic(SDL_Renderer *renderer) {
         snake_head.y = des.y;
     } else if (snake_head.y <= des.y) {
         snake_head.y = des.h + snake_head.h;
+    }
+
+    if (score > highscore) {
+        highscore = score;
     }
 }
 
